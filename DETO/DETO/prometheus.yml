@@ -1,0 +1,22 @@
+# # prometheus.yml
+# global:
+#   scrape_interval: 15s
+#   evaluation_interval: 15s
+
+# scrape_configs:
+#   - job_name: 'envoy'
+#     # Scrapes metrics from your Envoy instance.
+#     static_configs:
+#       - targets: ['envoy-proxy:9901']
+
+
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'envoy'
+    static_configs:
+      - targets: ['envoy-proxy:9901']  # Internal name of Envoy container
+    metrics_path: /stats/prometheus

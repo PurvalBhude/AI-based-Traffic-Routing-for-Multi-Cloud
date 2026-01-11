@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Traffic Routing Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            padding: 32px;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 48px;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 28px;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: #3a3a3a;
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            padding: 20px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .metric-card:hover {
+            border-color: #3a3a3a;
+            background: #1a1a1a;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-online {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+        }
+
+        .status-offline {
+            background: #6b7280;
+            box-shadow: 0 0 8px rgba(107, 114, 128, 0.4);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            margin-top: 24px;
+        }
+
+        .chart-container.small {
+            height: 240px;
+        }
+
+        .endpoint-list {
+            list-style: none;
+            margin: 16px 0;
+        }
+
+        .endpoint-item {
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .endpoint-item:hover {
+            border-color: #3a3a3a;
+            background: #1a1a1a;
+        }
+
+        .endpoint-address {
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #e5e5e5;
+        }
+
+        .endpoint-weight {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #10b981;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background: #0a0a0a;
+            border: 1px solid #2a2a2a;
+            padding: 20px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-box:hover {
+            border-color: #3a3a3a;
+            background: #1a1a1a;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 500;
+        }
+
+        .refresh-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            padding: 24px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            width: 52px;
+            height: 28px;
+            background: #2a2a2a;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: #555;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #10b981;
+        }
+
+        .toggle-switch.active::after {
+            background: #ffffff;
+            transform: translateX(24px);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            background: #151515;
+            color: #e5e5e5;
+        }
+
+        .btn:hover {
+            background: #1a1a1a;
+            border-color: #3a3a3a;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Traffic Routing Dashboard</h1>
+            <p>Real-time monitoring and analytics for AI-based load balancing</p>
+        </div>
+
+        <!-- System Status -->
+        <div class="card full-width">
+            <h3>System Status</h3>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="ai-service-status">
+                        <span class="status-indicator status-offline"></span>Checking
+                    </div>
+                    <div class="metric-label">AI Service</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="envoy-status">
+                        <span class="status-indicator status-offline"></span>Checking
+                    </div>
+                    <div class="metric-label">Envoy Proxy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="prometheus-status">
+                        <span class="status-indicator status-offline"></span>Checking
+                    </div>
+                    <div class="metric-label">Prometheus</div>
+                </div>
+            </div>
+        </div>
+         <!-- Endpoint Weights and Reward History -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Endpoint Weights</h3>
+                <ul class="endpoint-list" id="endpoint-weights">
+                    <li class="endpoint-item">
+                        <span class="endpoint-address">Loading...</span>
+                        <span class="endpoint-weight">Weight: -</span>
+                    </li>
+                </ul>
+                <div class="chart-container small">
+                    <canvas id="weightsBarChart"></canvas>
+                </div>
+            </div>
+
+           <!-- Load Distribution -->
+           <div class="card">
+            <h3>Load Distribution</h3>
+            <div class="stat-box" style="margin-bottom: 24px;">
+                <div class="stat-value" id="total-requests">0</div>
+                <div class="stat-label">Total Requests</div>
+            </div>
+            <div class="chart-container small">
+                <canvas id="loadBalanceChart"></canvas>
+            </div>
+        </div>
+        </div>
+        <div class="dashboard-grid">
+            <!-- AI Training Metrics -->
+            <div class="card">
+                <h3>AI Model Training</h3>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="stat-value" id="buffer-size">0</div>
+                        <div class="stat-label">Buffer Size</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="current-reward">0.00</div>
+                        <div class="stat-label">Current Reward</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trainingChart"></canvas>
+                </div>
+            </div>
+
+            
+            <div class="card">
+                <h3>Reward History</h3>
+                <div class="chart-container">
+                    <canvas id="rewardHistoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <!-- Auto Refresh Controls -->
+        <div class="refresh-controls">
+            <div class="auto-refresh">
+                <span>Auto Refresh</span>
+                <div class="toggle-switch" id="auto-refresh-toggle" onclick="toggleAutoRefresh()"></div>
+                <span id="refresh-status">OFF</span>
+            </div>
+            <button class="btn" onclick="refreshAll()">Refresh Now</button>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval;
+        let isAutoRefresh = false;
+
+        let trainingChart, loadBalanceChart, weightsBarChart, rewardHistoryChart;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            refreshAll();
+        });
+
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        labels: { 
+                            color: '#e5e5e5',
+                            font: {
+                                family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto',
+                                size: 12,
+                                weight: '500'
+                            },
+                            padding: 15
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { 
+                            color: '#888',
+                            font: { size: 11 }
+                        },
+                        grid: { color: '#2a2a2a' },
+                        border: { display: false }
+                    },
+                    x: { 
+                        ticks: { 
+                            color: '#888',
+                            font: { size: 11 }
+                        },
+                        grid: { color: '#2a2a2a' },
+                        border: { display: false }
+                    }
+                }
+            };
+
+            // Training Chart
+            trainingChart = new Chart(document.getElementById('trainingChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Reward',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: '#ef4444'
+                    }, {
+                        label: 'loss',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: '#10b981'
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Load Balance Chart (Pie Chart with vibrant colors)
+            loadBalanceChart = new Chart(document.getElementById('loadBalanceChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ['Server 1', 'Server 2', 'Server 3'],
+                    datasets: [{
+                        data: [1, 1, 1],
+                        backgroundColor: [
+                            '#3b82f6',  // Blue
+                            '#10b981',  // Green
+                            '#f59e0b',  // Amber
+                            '#8b5cf6',  // Purple
+                            '#ef4444'   // Red
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#151515'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { 
+                                color: '#e5e5e5',
+                                font: {
+                                    family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto',
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Weights Bar Chart (with gradient colors)
+            weightsBarChart = new Chart(document.getElementById('weightsBarChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Weight',
+                        data: [],
+                        backgroundColor: [
+                            '#3b82f6',  // Blue
+                            '#10b981',  // Green
+                            '#f59e0b',  // Amber
+                            '#8b5cf6',  // Purple
+                            '#ef4444'   // Red
+                        ],
+                        borderColor: [
+                            '#60a5fa',
+                            '#34d399',
+                            '#fbbf24',
+                            '#a78bfa',
+                            '#f87171'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Reward History Chart (bar chart with gradient)
+            rewardHistoryChart = new Chart(document.getElementById('rewardHistoryChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Reward',
+                        data: [],
+                        backgroundColor: '#10b981',
+                        borderColor: '#34d399',
+                        borderWidth: 1,
+                        hoverBackgroundColor: '#34d399'
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        async function checkSystemStatus() {
+            const services = [
+                { element: 'ai-service-status', url: 'http://localhost:5000/api/health' },
+                { element: 'envoy-status', url: 'http://localhost:5000/api/health' },
+                { element: 'prometheus-status', url: 'http://localhost:5000/api/metrics/all' },
+            ];
+
+            for (const { element, url } of services) {
+                try {
+                    const res = await fetch(url, { method: 'GET' });
+                    if (res.ok) {
+                        updateStatus(element, 'online');
+                    } else {
+                        updateStatus(element, 'offline');
+                    }
+                } catch (error) {
+                    updateStatus(element, 'offline');
+                }
+            }
+        }
+
+        function updateStatus(elementId, status) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            const indicator = element.querySelector('.status-indicator');
+            if (indicator) {
+                indicator.className = `status-indicator status-${status}`;
+            }
+
+            const textNode = Array.from(element.childNodes).find(node => node.nodeType === 3);
+            if (textNode) {
+                textNode.textContent = status === 'online' ? 'Online' : 'Offline';
+            }
+        }
+
+        async function updateAITrainingMetrics() {
+            try {
+                const response = await fetch('http://localhost:5000/api/metrics/training');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('buffer-size').textContent = data.buffer_size;
+                    document.getElementById('current-reward').textContent = data.current_reward.toFixed(3);
+
+                    const now = new Date().toLocaleTimeString();
+                    updateChart(trainingChart, now, [data.recent_losses[data.recent_losses.length - 1] || 0, data.current_reward]);
+                    
+                    if (data.recent_rewards.length > 0) {
+                        updateChartFull(rewardHistoryChart, data.recent_rewards.slice(-20));
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching AI training metrics:', error);
+            }
+        }
+
+        async function updateLoadBalancing() {
+            try {
+                const response = await fetch('http://localhost:5000/api/metrics/weights');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const weights = data.endpoint_weights;
+                    const totalRequests = data.total_requests;
+
+                    document.getElementById('total-requests').textContent = totalRequests;
+
+                    const endpointList = document.getElementById('endpoint-weights');
+                    endpointList.innerHTML = '';
+
+                    const chartLabels = [];
+                    const chartWeights = [];
+                    const doughnutLabels = [];
+                    const doughnutWeights = [];
+                    
+                    for (const [address, weight] of Object.entries(weights)) {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'endpoint-item';
+                        listItem.innerHTML = `
+                            <span class="endpoint-address">${address}</span>
+                            <span class="endpoint-weight">Weight: ${weight}</span>
+                        `;
+                        endpointList.appendChild(listItem);
+                        
+                        const port = address.split(':')[1];
+                        chartLabels.push(`Port ${port}`);
+                        chartWeights.push(weight);
+                        doughnutLabels.push(`Server ${port}`);
+                        doughnutWeights.push(weight);
+                    }
+
+                    weightsBarChart.data.labels = chartLabels;
+                    weightsBarChart.data.datasets[0].data = chartWeights;
+                    weightsBarChart.update();
+
+                    loadBalanceChart.data.labels = doughnutLabels;
+                    loadBalanceChart.data.datasets[0].data = doughnutWeights;
+                    loadBalanceChart.update();
+                }
+            } catch (error) {
+                console.error('Error fetching load balancing metrics:', error);
+            }
+        }
+
+        function updateChart(chart, label, values) {
+            chart.data.labels.push(label);
+            chart.data.labels = chart.data.labels.slice(-20);
+            
+            values.forEach((value, index) => {
+                chart.data.datasets[index].data.push(value);
+                chart.data.datasets[index].data = chart.data.datasets[index].data.slice(-20);
+            });
+            
+            chart.update();
+        }
+
+        function updateChartFull(chart, values) {
+            chart.data.labels = values.map((_, i) => i + 1);
+            chart.data.datasets[0].data = values;
+            chart.update();
+        }
+
+        function toggleAutoRefresh() {
+            const toggle = document.getElementById('auto-refresh-toggle');
+            const status = document.getElementById('refresh-status');
+            
+            isAutoRefresh = !isAutoRefresh;
+            toggle.classList.toggle('active', isAutoRefresh);
+            status.textContent = isAutoRefresh ? 'ON' : 'OFF';
+            
+            if (isAutoRefresh) {
+                autoRefreshInterval = setInterval(refreshAll, 5000);
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        function refreshAll() {
+            checkSystemStatus();
+            updateAITrainingMetrics();
+            updateLoadBalancing();
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "title":"Smart AI Traffic Routing - Overview",
+  "panels":[
+    {
+      "type":"row",
+      "title":"Overview",
+      "gridPos":{"h":1,"w":24,"x":0,"y":0}
+    },
+    {
+      "type":"graph",
+      "title":"Request Rate (per instance)",
+      "targets":[
+        {"expr":"sum(rate(http_requests_total[1m])) by (instance)", "legendFormat":"{{instance}}"}
+      ],
+      "gridPos":{"h":8,"w":12,"x":0,"y":1}
+    },
+    {
+      "type":"graph",
+      "title":"Avg Latency (s) per instance",
+      "targets":[
+        {"expr":"sum(rate(http_request_duration_seconds_sum[1m])) by (instance) / sum(rate(http_request_duration_seconds_count[1m])) by (instance)", "legendFormat":"{{instance}}"}
+      ],
+      "gridPos":{"h":8,"w":12,"x":12,"y":1}
+    },
+    {
+      "type":"graph",
+      "title":"Error Rate (5xx fraction)",
+      "targets":[
+        {"expr":"(sum(rate(http_requests_total{code=~\"5..\"}[1m])) by (instance)) / (sum(rate(http_requests_total[1m])) by (instance))", "legendFormat":"{{instance}}"}
+      ],
+      "gridPos":{"h":6,"w":12,"x":0,"y":9}
+    },
+    {
+      "type":"stat",
+      "title":"Total Requests (1m)",
+      "targets":[
+        {"expr":"sum(rate(http_requests_total[1m]))"}
+      ],
+      "gridPos":{"h":3,"w":6,"x":0,"y":15}
+    },
+    {
+      "type":"stat",
+      "title":"Avg Latency (s) overall",
+      "targets":[
+        {"expr":"sum(rate(http_request_duration_seconds_sum[1m])) / sum(rate(http_request_duration_seconds_count[1m]))"}
+      ],
+      "gridPos":{"h":3,"w":6,"x":6,"y":15}
+    }
+  ],
+  "schemaVersion":16,
+  "version":1,
+  "time":{"from":"now-1h","to":"now"}
+}

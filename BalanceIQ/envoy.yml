@@ -1,0 +1,267 @@
+# admin:
+#   access_log_path: "/dev/stdout"
+#   address:
+#     socket_address:
+#       address: 0.0.0.0
+#       port_value: 9901
+
+# static_resources:
+#   listeners:
+#     - name: listener_0
+#       address:
+#         socket_address:
+#           address: 0.0.0.0
+#           port_value: 80
+#       filter_chains:
+#         - filters:
+#             - name: envoy.filters.network.http_connection_manager
+#               typed_config:
+#                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+#                 stat_prefix: ingress_http
+#                 route_config:
+#                   name: local_route
+#                   virtual_hosts:
+#                     - name: backend
+#                       domains: ["*"]
+#                       routes:
+#                         - match:
+#                             prefix: "/"
+#                           route:
+#                             cluster: my_service
+#                 http_filters:
+#                   - name: envoy.filters.http.router
+#                     typed_config:
+#                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+#                 access_log:
+#                   - name: envoy.access_loggers.stdout
+#                     typed_config:
+#                       "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+
+#   clusters:
+#     # Dynamic cluster: my_service (endpoints fetched from xDS / AI service)
+#     - name: my_service
+#       type: EDS
+#       eds_cluster_config:
+#         service_name: my_service
+#         eds_config:
+#           api_config_source:
+#             api_type: GRPC
+#             grpc_services:
+#               - envoy_grpc:
+#                   cluster_name: xds_management_server
+#       connect_timeout: 5s
+#       lb_policy: ROUND_ROBIN
+#       health_checks:
+#         - timeout: 1s
+#           interval: 5s
+#           unhealthy_threshold: 3
+#           healthy_threshold: 2
+#           http_health_check:
+#             path: "/healthz"
+#       outlier_detection:
+#         consecutive_5xx: 5
+#         interval: 10s
+#         base_ejection_time: 30s
+#         max_ejection_percent: 50
+#         enforcing_consecutive_5xx: 100
+
+#     # xDS management server cluster (AI service container)
+#     - name: xds_management_server
+#       type: STRICT_DNS
+#       connect_timeout: 5s
+#       http2_protocol_options: {}
+#       lb_policy: ROUND_ROBIN
+#       load_assignment:
+#         cluster_name: xds_management_server
+#         endpoints:
+#           - lb_endpoints:
+#               - endpoint:
+#                   address:
+#                     socket_address:
+#                       address: ai_service   # Must match AI service container name
+#                       port_value: 50051
+
+
+
+
+
+
+
+
+
+# node:
+#   id: envoy-node-1
+#   cluster: my_service
+
+# admin:
+#   address:
+#     socket_address:
+#       address: 0.0.0.0
+#       port_value: 9901
+
+# static_resources:
+#   listeners:
+#     - name: listener_0
+#       address:
+#         socket_address:
+#           address: 0.0.0.0
+#           port_value: 80
+#       filter_chains:
+#         - filters:
+#             - name: envoy.filters.network.http_connection_manager
+#               typed_config:
+#                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+#                 stat_prefix: ingress_http
+#                 route_config:
+#                   name: local_route
+#                   virtual_hosts:
+#                     - name: backend
+#                       domains: ["*"]
+#                       routes:
+#                         - match:
+#                             prefix: "/"
+#                           route:
+#                             cluster: my_service
+#                 http_filters:
+#                   - name: envoy.filters.http.router
+#                     typed_config:
+#                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+#                 access_log:
+#                   - name: envoy.access_loggers.stdout
+#                     typed_config:
+#                       "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+
+#   clusters:
+#     # Dynamic cluster: my_service (endpoints fetched from xDS / AI service)
+#     - name: my_service
+#       type: EDS
+#       eds_cluster_config:
+#         service_name: my_service
+#         eds_config:
+#           api_config_source:
+#             api_type: GRPC
+#             transport_api_version: V3
+#             grpc_services:
+#               - envoy_grpc:
+#                   cluster_name: xds_management_server
+#       connect_timeout: 5s
+#       lb_policy: ROUND_ROBIN
+#       health_checks:
+#         - timeout: 1s
+#           interval: 5s
+#           unhealthy_threshold: 3
+#           healthy_threshold: 2
+#           http_health_check:
+#             path: "/healthz"
+#       outlier_detection:
+#         consecutive_5xx: 5
+#         interval: 10s
+#         base_ejection_time: 30s
+#         max_ejection_percent: 50
+#         enforcing_consecutive_5xx: 100
+
+#     # xDS management server cluster (AI service container)
+#     - name: xds_management_server
+#       type: STRICT_DNS
+#       connect_timeout: 5s
+#       http2_protocol_options: {}
+#       lb_policy: ROUND_ROBIN
+#       load_assignment:
+#         cluster_name: xds_management_server
+#         endpoints:
+#           - lb_endpoints:
+#               - endpoint:
+#                   address:
+#                     socket_address:
+#                       address: ai_service   # Must match AI service container name
+#                       port_value: 50051
+
+
+# ------------------------------------------------------
+node: 
+  id: envoy-node-1 
+  cluster: my_service 
+
+admin: 
+  address: 
+    socket_address: 
+      address: 0.0.0.0 
+      port_value: 9901 
+
+static_resources: 
+  listeners: 
+    - name: listener_0 
+      address: 
+        socket_address: 
+          address: 0.0.0.0 
+          port_value: 80 
+      filter_chains: 
+        - filters: 
+            - name: envoy.filters.network.http_connection_manager 
+              typed_config: 
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager 
+                stat_prefix: ingress_http 
+                route_config: 
+                  name: local_route 
+                  virtual_hosts: 
+                    - name: backend 
+                      domains: ["*"] 
+                      routes: 
+                        - match: 
+                            prefix: "/" 
+                          route: 
+                            cluster: my_service 
+                http_filters: 
+                  - name: envoy.filters.http.router 
+                    typed_config: 
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router 
+                access_log: 
+                  - name: envoy.access_loggers.stdout 
+                    typed_config: 
+                      "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog 
+
+  clusters: 
+    # Dynamic cluster: my_service (endpoints fetched from xDS / AI service) 
+    - name: my_service 
+      type: EDS 
+      track_cluster_stats: {} # 🌟 FIX: Forces granular, per-endpoint stats creation
+      eds_cluster_config: 
+        service_name: my_service 
+        eds_config: 
+          api_config_source: 
+            api_type: GRPC 
+            transport_api_version: V3 
+            grpc_services: 
+              - envoy_grpc: 
+                  cluster_name: xds_management_server 
+      connect_timeout: 5s 
+      lb_policy: ROUND_ROBIN 
+      health_checks: 
+        - timeout: 1s 
+          interval: 5s 
+          unhealthy_threshold: 3 
+          healthy_threshold: 2 
+          http_health_check: 
+            path: "/healthz" 
+      outlier_detection: 
+        consecutive_5xx: 5 
+        interval: 10s 
+        base_ejection_time: 30s 
+        max_ejection_percent: 50 
+        enforcing_consecutive_5xx: 100 
+
+    # xDS management server cluster (AI service container) 
+    - name: xds_management_server 
+      type: STRICT_DNS 
+      connect_timeout: 5s 
+      http2_protocol_options: {} 
+      lb_policy: ROUND_ROBIN 
+      load_assignment: 
+        cluster_name: xds_management_server 
+        endpoints: 
+          - lb_endpoints: 
+              - endpoint: 
+                  address: 
+                    socket_address: 
+                      address: ai_service  # Must match AI service container name 
+                      port_value: 50051

@@ -1,0 +1,12 @@
+sudo apt update
+sudo apt install -y docker.io docker-compose
+sudo usermod -aG docker $USER
+newgrp docker
+
+mkdir ~/prometheus-server && cd ~/prometheus-server
+
+#clone repo file
+
+docker compose up -d
+
+docker ps

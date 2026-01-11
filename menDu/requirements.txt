@@ -1,0 +1,9 @@
+numpy
+requests
+tensorflow==2.13.0
+pulp
+grpcio
+grpcio-tools
+protobuf<=3.20.3
+flask
+flask-cors

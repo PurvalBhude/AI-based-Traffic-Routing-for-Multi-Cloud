@@ -1,0 +1,4 @@
+sudo apt update && sudo apt install -y docker docker-compose git
+git clone https://github.com/<your-repo>/RepoName.git
+cd envoy-setup
+docker-compose up -d
